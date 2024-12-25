@@ -1,10 +1,9 @@
 import io.qameta.allure.junit4.DisplayName;
 import model.CourierData;
-import model.LoginData;
-import model.LoginResponseData;
 import org.apache.http.HttpStatus;
 import org.junit.Test;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 
 public class LoginCourierTest extends BaseApiTest{
@@ -13,19 +12,13 @@ public class LoginCourierTest extends BaseApiTest{
     @Test
     public void courierCanLogInTest() {
 
-        courierData = new CourierData(login, password, firstName);
-        //вызываем метод
-        response = courierApi.createCourier(courierData);
-        loginData = new LoginData(login, password);
-        response = courierApi.loginCourier(loginData);
-
-        id = response.extract().body().jsonPath().getInt("id");
-
-        //проверка
+        createCourier(login, password, firstName);
+        loginCourier(login, password);
         response.log().all()
                 .assertThat()
                 .statusCode(HttpStatus.SC_OK)
-                .body("id", is(id));
+                .and()
+                .body(containsString("id"));
     }
 
     @DisplayName("Check courier can't log in with non-existent user")
@@ -33,14 +26,12 @@ public class LoginCourierTest extends BaseApiTest{
     public void courierCantLogInWithNonExistentUserTest() {
 
         courierData = new CourierData(login, password, firstName);
-        //вызываем метод
-        loginData = new LoginData(login, password);
-        response = courierApi.loginCourier(loginData);
+        loginCourier(login, password);
 
-        //проверка
         response.log().all()
                 .assertThat()
                 .statusCode(HttpStatus.SC_NOT_FOUND)
+                .and()
                 .body("message", is("Учетная запись не найдена"));
     }
 
@@ -48,16 +39,13 @@ public class LoginCourierTest extends BaseApiTest{
     @Test
     public void courierCantLogInWithoutLoginTest() {
 
-        courierData = new CourierData(login, password);
-        //вызываем метод
-        response = courierApi.createCourier(courierData);
-        loginData = new LoginData(null, password);
-        response = courierApi.loginCourier(loginData);
+        createCourier(login, password, firstName);
+        loginCourier(null, password);
 
-        //проверка
         response.log().all()
                 .assertThat()
                 .statusCode(HttpStatus.SC_BAD_REQUEST)
+                .and()
                 .body("message", is("Недостаточно данных для входа"));
     }
 
@@ -65,16 +53,13 @@ public class LoginCourierTest extends BaseApiTest{
     @Test
     public void courierCantLogInWithoutPasswordTest() {
 
-        courierData = new CourierData(login, password, firstName);
-        //вызываем метод
-        response = courierApi.createCourier(courierData);
-        loginData = new LoginData(login, null);
-        response = courierApi.loginCourier(loginData);
+        createCourier(login, password, firstName);
+        loginCourier(login, null);
 
-        //проверка
         response.log().all()
                 .assertThat()
                 .statusCode(HttpStatus.SC_BAD_REQUEST)
+                .and()
                 .body("message", is("Недостаточно данных для входа"));
     }
 
@@ -82,16 +67,13 @@ public class LoginCourierTest extends BaseApiTest{
     @Test
     public void courierCantLogInWithWrongLoginTest() {
 
-        courierData = new CourierData(login, password, firstName);
-        //вызываем метод
-        response = courierApi.createCourier(courierData);
-        loginData = new LoginData("a" + login, password);
-        response = courierApi.loginCourier(loginData);
+        createCourier(login, password, firstName);
+        loginCourier("a" + login, password);
 
-        //проверка
         response.log().all()
                 .assertThat()
                 .statusCode(HttpStatus.SC_NOT_FOUND)
+                .and()
                 .body("message", is("Учетная запись не найдена"));
     }
 
@@ -99,17 +81,13 @@ public class LoginCourierTest extends BaseApiTest{
     @Test
     public void courierCantLogInWithWrongPasswordTest() {
 
-        courierData = new CourierData(login, password, firstName);
-        //вызываем метод
-        response = courierApi.createCourier(courierData);
-        loginData = new LoginData(login, "a" + password);
-        response = courierApi.loginCourier(loginData);
+        createCourier(login, password, firstName);
+        loginCourier(login, "a" + password);
 
-        //проверка
         response.log().all()
                 .assertThat()
+                .and()
                 .statusCode(HttpStatus.SC_NOT_FOUND)
                 .body("message", is("Учетная запись не найдена"));
     }
-
 }

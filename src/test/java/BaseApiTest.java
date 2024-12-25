@@ -2,7 +2,6 @@ import api.CourierApi;
 import io.restassured.response.ValidatableResponse;
 import model.CourierData;
 import model.LoginData;
-import model.LoginResponseData;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.http.HttpStatus;
 import org.junit.After;
@@ -13,10 +12,13 @@ public class BaseApiTest {
     protected CourierApi courierApi;
     protected LoginData loginData;
     protected ValidatableResponse response;
+
     protected String login;
     protected String password;
     protected String firstName;
-    protected int id = 0;
+
+    protected int courierId;
+    protected int responseCode;
 
     @Before
     public void courierInit() {
@@ -28,13 +30,24 @@ public class BaseApiTest {
 
     @After
     public void cleanUp() {
-//        if (response.extract().statusCode() == HttpStatus.SC_CREATED ||
-//                response.extract().statusCode() == HttpStatus.SC_CONFLICT) {
-            response = courierApi.loginCourier(new LoginData(login, password));
+        if (responseCode == HttpStatus.SC_CREATED) {
+            loginCourier(login, password);
+            courierId = response.extract().body().jsonPath().getInt("id");
+            response = courierApi.deleteCourier(courierId);
+            response.log().all()
+                    .assertThat()
+                    .statusCode(HttpStatus.SC_OK);
+        }
+    }
 
-            id = response.extract().body().jsonPath().getInt("id");
-            if (id != 0){
-                response = courierApi.deleteCourier(id);
-            }
+    protected void createCourier(String login, String password, String firstName) {
+        courierData = new CourierData(login, password, firstName);
+        response = courierApi.createCourier(courierData);
+        responseCode = response.extract().statusCode();
+    }
+
+    protected void loginCourier(String login, String password) {
+        loginData = new LoginData(login, password);
+        response = courierApi.loginCourier(loginData);
     }
 }

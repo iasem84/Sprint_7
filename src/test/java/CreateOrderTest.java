@@ -3,47 +3,48 @@ import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.ValidatableResponse;
 import model.OrderData;
 import org.apache.http.HttpStatus;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import static data.Constants.*;
 import static org.hamcrest.CoreMatchers.*;
 
 @RunWith(Parameterized.class)
-public class CreateOrderTest{
+public class CreateOrderTest {
 
-    protected OrderData orderData;
-    protected OrderApi orderApi;
-    protected ValidatableResponse response;
+    private final OrderData orderData;
+    private OrderApi orderApi;
+    public ValidatableResponse response;
 
-    private static final String BLACK_COLOR = "BLACK";
-    private static final String GREY_COLOR = "GREY";
-
-//    @After
-//    public void cleanUp() {
-//        LoginResponseData loginResponse = courierApi.loginCourier(new LoginData(login, password))
-//                .extract().as(LoginResponseData.class);
-//        id = loginResponse.getId();
-//        if (id != 0) {
-//            response = courierApi.deleteCourier(id);
-//        }
-//    }
+    @After
+    public void cleanUp() {
+        int orderId = response.extract().body().jsonPath().getInt("track");
+        response = orderApi.cancelOrder(orderId);
+        response.log().all()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .and()
+                .body("ok", is(true));
+    }
 
     public CreateOrderTest(String firstName, String lastName, String address, String metroStation, String phone,
                            int rentTime, String deliveryDate, String comment, String[] color) {
         orderData = new OrderData(firstName, lastName, address, metroStation, phone, rentTime, deliveryDate, comment, color);
     }
 
-    @Parameterized.Parameters
+    @Parameterized.Parameters (name = "firstName = {0}, lastName = {1}, address = {2}, metroStation = {3}, phone = {4}," +
+            "rentTime = {5}, deliveryDate = {6}, comment = {7}, color = {8}")
     public static Object[][] getData() {
         return new Object[][] {
-                {"Asem", "Ким", "Толе би 298/1", "Белорусская", "87012170000", 3, "2024-12-30", "лололо",
+                {FIRST_NAME, LAST_NAME, ADDRESS, METRO_STATION, PHONE, RENT_TIME, DELIVERY_DATE, COMMENT,
                         new String[]{BLACK_COLOR, GREY_COLOR}},
-                {"Asem", "Ким", "Толе би 298/1", "Белорусская", "87012170000", 3, "2024-12-30", "лололо",
+                {FIRST_NAME, LAST_NAME, ADDRESS, METRO_STATION, PHONE, RENT_TIME, DELIVERY_DATE, COMMENT,
                         new String[]{BLACK_COLOR}},
-                {"Asem", "Ким", "Толе би 298/1", "Белорусская", "87012170000", 3, "2024-12-30", "лололо",
+                {FIRST_NAME, LAST_NAME, ADDRESS, METRO_STATION, PHONE, RENT_TIME, DELIVERY_DATE, COMMENT,
                         new String[]{GREY_COLOR}},
-                {"Asem", "Ким", "Толе би 298/1", "Белорусская", "87012170000", 3, "2024-12-30", "лололо",
+                {FIRST_NAME, LAST_NAME, ADDRESS, METRO_STATION, PHONE, RENT_TIME, DELIVERY_DATE, COMMENT,
                         new String[]{}}
         };
     }
@@ -53,15 +54,12 @@ public class CreateOrderTest{
     public void orderCanBeCreatedTest() {
 
         orderApi = new OrderApi();
-        //вызываем метод
         response = orderApi.createOrder(orderData);
 
-        //проверка
         response.log().all()
                 .assertThat()
                 .statusCode(HttpStatus.SC_CREATED)
                 .and()
                 .body(containsString("track"));
-        int track = response.extract().body().jsonPath().getInt("track");
     }
 }

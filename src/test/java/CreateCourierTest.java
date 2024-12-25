@@ -1,5 +1,4 @@
 import io.qameta.allure.junit4.DisplayName;
-import model.CourierData;
 import org.apache.http.HttpStatus;
 import org.junit.Test;
 
@@ -11,11 +10,7 @@ public class CreateCourierTest extends BaseApiTest{
     @Test
     public void courierCanBeCreatedTest() {
 
-        courierData = new CourierData(login, password, firstName);
-        //вызываем метод
-        response = courierApi.createCourier(courierData);
-
-        //проверка
+        createCourier(login, password, firstName);
         response.log().all()
                 .assertThat()
                 .statusCode(HttpStatus.SC_CREATED)
@@ -25,27 +20,25 @@ public class CreateCourierTest extends BaseApiTest{
     @DisplayName("Check the same courier can't be created")
     @Test
     public void sameCourierCantBeCreatedTest() {
-        courierData = new CourierData(login, password, firstName);
 
-        response = courierApi.createCourier(courierData);
+        createCourier(login, password, firstName);
         response = courierApi.createCourier(courierData);
         response.log().all()
+                .assertThat()
                 .statusCode(HttpStatus.SC_CONFLICT)
                 .and()
-                .assertThat()
                 .body("message", is("Этот логин уже используется. Попробуйте другой."));
     }
 
     @DisplayName("Check courier can't be created without login")
     @Test
     public void cantCreateCourierWithoutLoginTest() {
-        courierData = new CourierData(null, password, firstName);
-        response = courierApi.createCourier(courierData);
 
+        createCourier(null, password, firstName);
         response.log().all()
+                .assertThat()
                 .statusCode(HttpStatus.SC_BAD_REQUEST)
                 .and()
-                .assertThat()
                 .body("message", is("Недостаточно данных для создания учетной записи"));
 
     }
@@ -53,13 +46,12 @@ public class CreateCourierTest extends BaseApiTest{
     @DisplayName("Check courier can't be created without password")
     @Test
     public void cantCreateCourierWithoutPasswordTest() {
-        courierData = new CourierData(login, null);
-        response = courierApi.createCourier(courierData);
 
+        createCourier(login, null, firstName);
         response.log().all()
+                .assertThat()
                 .statusCode(HttpStatus.SC_BAD_REQUEST)
                 .and()
-                .assertThat()
                 .body("message", is("Недостаточно данных для создания учетной записи"));
     }
 }
